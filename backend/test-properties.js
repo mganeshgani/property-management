@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://property-management-backend-zfnl.onrender.com/api';
 let ownerToken = '';
 let adminToken = '';
 let testPropertyId = '';

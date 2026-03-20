@@ -27,14 +27,15 @@ const createProperty = async (req, res, next) => {
       parsedAmenities = JSON.parse(amenities);
     }
 
-    // Upload images to Cloudinary
-    const images = [];
+    // Upload images to Cloudinary concurrently
+    let images = [];
     if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
+      const uploadPromises = req.files.map(async (file) => {
         const result = await uploadToCloudinary(file.path, 'property-management/properties');
-        images.push(result);
         fs.unlinkSync(file.path);
-      }
+        return result;
+      });
+      images = await Promise.all(uploadPromises);
     }
 
     const property = await Property.create({
@@ -251,14 +252,14 @@ const updateProperty = async (req, res, next) => {
       delete updateData.removedImages;
     }
 
-    // Handle new image uploads
+    // Handle new image uploads concurrently
     if (req.files && req.files.length > 0) {
-      const newImages = [];
-      for (const file of req.files) {
+      const uploadPromises = req.files.map(async (file) => {
         const result = await uploadToCloudinary(file.path, 'property-management/properties');
-        newImages.push(result);
         fs.unlinkSync(file.path);
-      }
+        return result;
+      });
+      const newImages = await Promise.all(uploadPromises);
       updateData.images = [...(updateData.images || property.images), ...newImages];
     }
 
@@ -369,7 +370,7 @@ const approveProperty = async (req, res, next) => {
       link: `/properties/${property.slug}`,
     });
 
-    await sendEmail({
+    sendEmail({
       to: property.owner.email,
       subject: 'Property Listing Approved! - Property Manager',
       template: 'propertyApproved',
@@ -380,7 +381,7 @@ const approveProperty = async (req, res, next) => {
         listingType: property.listingType,
         propertyLink: `${process.env.FRONTEND_URL}/properties/${property.slug}`,
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     res.status(200).json({
       success: true,
@@ -418,7 +419,7 @@ const rejectProperty = async (req, res, next) => {
       link: `/dashboard/owner/properties`,
     });
 
-    await sendEmail({
+    sendEmail({
       to: property.owner.email,
       subject: 'Property Listing Update - Property Manager',
       template: 'propertyRejected',
@@ -428,7 +429,7 @@ const rejectProperty = async (req, res, next) => {
         rejectionReason,
         dashboardLink: `${process.env.FRONTEND_URL}/dashboard/owner/properties`,
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     res.status(200).json({
       success: true,

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api/auth';
+const API_URL = 'https://property-management-backend-zfnl.onrender.com/api/auth';
 let authToken = '';
 
 async function fetchHelper(url, options = {}) {

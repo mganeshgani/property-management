@@ -33,3 +33,4 @@ Thumbs.db
 *.pem
 .idea/
 .vscode/
+.vercel

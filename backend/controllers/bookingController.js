@@ -76,7 +76,7 @@ const createBooking = async (req, res, next) => {
       link: `/dashboard/bookings`,
     });
 
-    await sendEmail({
+    sendEmail({
       to: property.owner.email,
       subject: 'New Booking Request - Property Manager',
       template: 'bookingReceived',
@@ -90,7 +90,7 @@ const createBooking = async (req, res, next) => {
         moveInDate: moveInDate ? new Date(moveInDate).toLocaleDateString() : null,
         dashboardLink: `${process.env.FRONTEND_URL}/dashboard/bookings`,
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     const populatedBooking = await Booking.findById(booking._id)
       .populate('property', 'title slug images price listingType')
@@ -211,7 +211,7 @@ const approveBooking = async (req, res, next) => {
       link: `/dashboard/bookings`,
     });
 
-    await sendEmail({
+    sendEmail({
       to: booking.tenant.email,
       subject: 'Booking Approved! - Property Manager',
       template: 'bookingApproved',
@@ -223,7 +223,7 @@ const approveBooking = async (req, res, next) => {
         ownerPhone: booking.owner.phone,
         dashboardLink: `${process.env.FRONTEND_URL}/dashboard/bookings`,
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     res.status(200).json({
       success: true,
@@ -269,7 +269,7 @@ const rejectBooking = async (req, res, next) => {
       link: `/dashboard/bookings`,
     });
 
-    await sendEmail({
+    sendEmail({
       to: booking.tenant.email,
       subject: 'Booking Update - Property Manager',
       template: 'bookingRejected',
@@ -279,7 +279,7 @@ const rejectBooking = async (req, res, next) => {
         rejectionReason: booking.rejectionReason,
         browseLink: `${process.env.FRONTEND_URL}/properties`,
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     res.status(200).json({
       success: true,

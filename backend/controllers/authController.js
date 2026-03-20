@@ -46,7 +46,7 @@ const register = async (req, res, next) => {
     const verificationLink = `${process.env.FRONTEND_URL}/auth/verify-email?token=${verificationToken}`;
 
     // Send welcome email
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: 'Welcome to Property Manager!',
       template: 'welcome',
@@ -55,7 +55,7 @@ const register = async (req, res, next) => {
         role: user.role,
         verificationLink,
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     // Set refresh token in httpOnly cookie
     res.cookie('refreshToken', refreshToken, {
@@ -213,7 +213,7 @@ const forgotPassword = async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     // Send OTP email
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: 'Password Reset OTP - Property Manager',
       template: 'otpEmail',
@@ -221,7 +221,7 @@ const forgotPassword = async (req, res, next) => {
         firstName: user.firstName,
         otp,
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     res.status(200).json({
       success: true,
@@ -289,7 +289,7 @@ const resetPassword = async (req, res, next) => {
     await user.save();
 
     // Send confirmation email
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: 'Password Reset Successful - Property Manager',
       template: 'passwordResetConfirmation',
@@ -297,7 +297,7 @@ const resetPassword = async (req, res, next) => {
         firstName: user.firstName,
         loginLink: `${process.env.FRONTEND_URL}/auth/login`,
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     res.status(200).json({
       success: true,

@@ -222,7 +222,7 @@ const assignWorker = async (req, res, next) => {
       link: `/dashboard/worker`,
     });
 
-    await sendEmail({
+    sendEmail({
       to: worker.email,
       subject: 'New Task Assigned - Property Manager',
       template: 'maintenanceAssigned',
@@ -235,7 +235,7 @@ const assignWorker = async (req, res, next) => {
         description: request.description,
         dashboardLink: `${process.env.FRONTEND_URL}/dashboard/worker`,
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     res.status(200).json({
       success: true,
@@ -314,7 +314,7 @@ const completeMaintenance = async (req, res, next) => {
       link: `/dashboard/maintenance`,
     });
 
-    await sendEmail({
+    sendEmail({
       to: request.raisedBy.email,
       subject: 'Maintenance Completed - Property Manager',
       template: 'maintenanceCompleted',
@@ -324,7 +324,7 @@ const completeMaintenance = async (req, res, next) => {
         workerNotes: request.workerNotes || 'No additional notes.',
         completedAt: new Date().toLocaleDateString(),
       },
-    });
+    }).catch(err => console.error('Email Error:', err));
 
     // Notify owner
     await createNotification({
