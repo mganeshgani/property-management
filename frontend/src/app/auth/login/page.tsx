@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginInput } from "@/lib/validations";
@@ -18,8 +18,20 @@ import axios from "axios";
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuthStore();
+  const { login, user, isLoading, fetchUser } = useAuthStore();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!user && isLoading) {
+      fetchUser().catch(() => {
+        // ignore
+      });
+      return;
+    }
+    if (!isLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isLoading, fetchUser, router]);
 
   const {
     register,

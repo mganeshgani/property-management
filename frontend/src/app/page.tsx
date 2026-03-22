@@ -22,6 +22,7 @@ import PropertyCard from "@/components/shared/PropertyCard";
 import api from "@/lib/api";
 import { Property } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 const stats = [
   { label: "Properties Listed", value: "2,500+", icon: Home },
@@ -57,6 +58,19 @@ export default function HomePage() {
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+  const { user, isLoading, fetchUser } = useAuthStore();
+
+  useEffect(() => {
+    if (!user && isLoading) {
+      fetchUser().catch(() => {
+        // ignore
+      });
+      return;
+    }
+    if (!isLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isLoading, fetchUser, router]);
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -76,6 +90,10 @@ export default function HomePage() {
       router.push(`/properties?search=${encodeURIComponent(searchQuery)}`);
     }
   };
+
+  if (!isLoading && user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen">

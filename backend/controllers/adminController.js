@@ -172,6 +172,7 @@ const toggleUserActive = async (req, res, next) => {
 const changeUserRole = async (req, res, next) => {
   try {
     const { role } = req.body;
+    const PRIMARY_ADMIN_EMAIL = 'admin@test.com';
 
     if (!['customer', 'owner', 'worker', 'admin'].includes(role)) {
       throw ApiError.badRequest('Invalid role.');
@@ -180,6 +181,14 @@ const changeUserRole = async (req, res, next) => {
     const user = await User.findById(req.params.id);
     if (!user) {
       throw ApiError.notFound('User not found.');
+    }
+
+    if (role === 'admin' && user.email !== PRIMARY_ADMIN_EMAIL) {
+      throw ApiError.forbidden(`Only ${PRIMARY_ADMIN_EMAIL} can have admin role.`);
+    }
+
+    if (user.email === PRIMARY_ADMIN_EMAIL && role !== 'admin') {
+      throw ApiError.forbidden(`Cannot change role for ${PRIMARY_ADMIN_EMAIL}.`);
     }
 
     user.role = role;

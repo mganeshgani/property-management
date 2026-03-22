@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { X, Plus, ArrowLeftRight, Search, Loader2 } from "lucide-react";
 import Navbar from "@/components/shared/Navbar";
@@ -24,20 +25,33 @@ export default function ComparePage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
 
-  const searchProperties = async () => {
-    if (!searchQuery.trim()) return;
+  const fetchAvailableProperties = async (query = "") => {
     setSearchLoading(true);
     try {
-      const { data } = await api.get(
-        `/properties?search=${encodeURIComponent(searchQuery)}&limit=5`
-      );
+      const params = new URLSearchParams();
+      params.set("limit", "12");
+      params.set("sort", "newest");
+      if (query.trim()) {
+        params.set("search", query.trim());
+      }
+      const { data } = await api.get(`/properties?${params.toString()}`);
       setSearchResults(data.properties || []);
     } catch {
-      toast.error("Search failed");
+      toast.error("Failed to load properties");
     } finally {
       setSearchLoading(false);
     }
   };
+
+  const searchProperties = async () => {
+    await fetchAvailableProperties(searchQuery);
+  };
+
+  useEffect(() => {
+    if (activeSlot !== null) {
+      fetchAvailableProperties();
+    }
+  }, [activeSlot]);
 
   const addProperty = (property: Property, slot: number) => {
     const updated = [...properties];
@@ -76,6 +90,12 @@ export default function ComparePage() {
   ];
 
   const filledProperties = properties.filter(Boolean) as Property[];
+  const selectedPropertyIds = new Set(
+    properties.filter(Boolean).map((property) => (property as Property)._id)
+  );
+  const displayResults = searchResults.filter(
+    (result) => !selectedPropertyIds.has(result._id)
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -171,7 +191,13 @@ export default function ComparePage() {
                 <div className="flex gap-2 mb-4">
                   <Input
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchQuery(value);
+                      if (!value.trim()) {
+                        fetchAvailableProperties("");
+                      }
+                    }}
                     placeholder="Search by name or location..."
                     onKeyDown={(e) => e.key === "Enter" && searchProperties()}
                   />
@@ -183,8 +209,16 @@ export default function ComparePage() {
                     )}
                   </Button>
                 </div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-gray-600">
+                    Available Properties
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {displayResults.length} found
+                  </p>
+                </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {searchResults.map((result) => (
+                  {displayResults.map((result) => (
                     <button
                       key={result._id}
                       onClick={() => addProperty(result, activeSlot)}
@@ -212,9 +246,9 @@ export default function ComparePage() {
                       </div>
                     </button>
                   ))}
-                  {searchResults.length === 0 && searchQuery && !searchLoading && (
+                  {displayResults.length === 0 && !searchLoading && (
                     <p className="text-center text-sm text-gray-500 py-4">
-                      No properties found
+                      No available properties found
                     </p>
                   )}
                 </div>

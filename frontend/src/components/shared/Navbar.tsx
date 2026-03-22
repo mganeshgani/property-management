@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const isDashboard = pathname.startsWith("/dashboard");
 
@@ -25,12 +26,19 @@ export default function Navbar() {
     ? `/dashboard/${user.role}`
     : "/dashboard/customer";
 
+  const handleLogout = async () => {
+    setProfileOpen(false);
+    setMobileOpen(false);
+    await logout();
+    router.push("/auth/login");
+  };
+
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href={isAuthenticated ? dashboardLink : "/"} className="flex items-center gap-2">
             <Building2 className="h-8 w-8 text-blue-600" />
             <span className="text-xl font-bold text-gray-900 hidden sm:block">
               PropertyManager
@@ -139,10 +147,7 @@ export default function Navbar() {
                           Profile
                         </Link>
                         <button
-                          onClick={() => {
-                            setProfileOpen(false);
-                            logout();
-                          }}
+                          onClick={handleLogout}
                           className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
                         >
                           <LogOut className="h-4 w-4" />
