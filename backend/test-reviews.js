@@ -1,7 +1,7 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
 const mongoose = require('mongoose');
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.TEST_API_URL || 'https://property-management-backend-zfnl.onrender.com/api';
 let customerToken = '';
 let ownerToken = '';
 let testPropertyId = '';
@@ -169,6 +169,10 @@ async function runTests() {
     console.log('\n--- REVIEW AND NOTIFICATION MODULE TESTS FINISHED ---');
   } catch (err) {
     console.error('Uncaught error in test suite:', err.message || err);
+  } finally {
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
   }
 }
 

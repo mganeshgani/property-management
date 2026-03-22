@@ -49,24 +49,26 @@ export default function MaintenancePage() {
 
   const isCustomer = user?.role === "customer";
   const isOwner = user?.role === "owner";
+  const isWorker = user?.role === "worker";
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
       let endpoint = "/maintenance/my-requests";
       if (isOwner) endpoint = "/maintenance/owner-requests";
+      if (isWorker) endpoint = "/maintenance/worker-tasks";
 
       const params = new URLSearchParams({ page: String(page), limit: "10" });
       if (statusFilter) params.set("status", statusFilter);
       const { data } = await api.get(`${endpoint}?${params.toString()}`);
-      setRequests(data.requests || []);
+      setRequests(data.requests || data.tasks || []);
       setTotalPages(data.pages || 1);
     } catch {
       toast.error("Failed to load requests");
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, isOwner]);
+  }, [page, statusFilter, isOwner, isWorker]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
@@ -153,7 +155,7 @@ export default function MaintenancePage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          {isOwner ? "Maintenance Requests" : "My Maintenance Requests"}
+          {isOwner ? "Maintenance Requests" : isWorker ? "My Tasks" : "My Maintenance Requests"}
         </h1>
         <div className="flex items-center gap-3">
           <select
@@ -183,8 +185,14 @@ export default function MaintenancePage() {
         </div>
       ) : requests.length === 0 ? (
         <EmptyState
-          title="No maintenance requests"
-          description={isCustomer ? "Submit a request when something needs fixing." : "No maintenance requests for your properties."}
+          title={isWorker ? "No tasks assigned" : "No maintenance requests"}
+          description={
+            isCustomer
+              ? "Submit a request when something needs fixing."
+              : isOwner
+                ? "No maintenance requests for your properties."
+                : "No maintenance tasks assigned yet."
+          }
         />
       ) : (
         <>

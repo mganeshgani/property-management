@@ -1,4 +1,5 @@
 const API_URL = 'https://property-management-backend-zfnl.onrender.com/api';
+const mongoose = require('mongoose');
 let customerToken = '';
 let ownerToken = '';
 let workerToken = '';
@@ -80,7 +81,6 @@ async function runTests() {
 
     // Get Admin Token to approve property
     const admin = await registerTestUser('admin');
-    const mongoose = require('mongoose');
     const { connect } = require('mongoose');
     if (mongoose.connection.readyState === 0) {
       require('dotenv').config();
@@ -183,6 +183,10 @@ async function runTests() {
     console.log('\n--- MAINTENANCE MODULE TESTS FINISHED ---');
   } catch (err) {
     console.error('Uncaught error:', err.message || err);
+  } finally {
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
   }
 }
 

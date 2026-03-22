@@ -1,4 +1,5 @@
 const API_URL = 'https://property-management-backend-zfnl.onrender.com/api';
+const mongoose = require('mongoose');
 let ownerToken = '';
 let adminToken = '';
 let testPropertyId = '';
@@ -33,7 +34,6 @@ async function registerTestUser(role) {
   if (role === 'admin') {
     // We will cheat and upgrade this user directly via mongosh or a special route.
     // For now let's just use a script to connect to mongoose and update it.
-    const mongoose = require('mongoose');
     const { connect } = require('mongoose');
     const dot = require('dotenv').config();
     const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
@@ -120,6 +120,10 @@ async function runTests() {
     console.log('\n--- PROPERTIES MODULE TESTS FINISHED ---');
   } catch (err) {
     console.error('Uncaught error:', err.message || err);
+  } finally {
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
   }
 }
 
